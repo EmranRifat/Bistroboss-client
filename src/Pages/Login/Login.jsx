@@ -11,17 +11,16 @@ import { AuthContext } from "../../Context/AuthProvider";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Swal from "sweetalert2";
+import useAxiosPublic from "../../hooks/useAxiosPublic";
 
 const Login = () => {
   const { signIn, logOut, setLoading, signInWithGoogle } =
     useContext(AuthContext);
   const [disable, setDisable] = useState(true);
-
   const location = useLocation();
   const navigate = useNavigate();
+  const axiosPublic = useAxiosPublic();
   const from = location.state?.from?.pathname || "/";
-  
-  
   const handleLogin = (event) => {
     event.preventDefault();
     const form = event.target;
@@ -51,18 +50,44 @@ const Login = () => {
     loadCaptchaEnginge(6);
   }, []);
 
+
+
+
   const handleGoogleSignIn = () => {
     signInWithGoogle()
       .then((result) => {
-        const user = result.user;
-        console.log(user);
+        // const user = result.user;
+        const userInfo = {
+          name: result.user?.displayName,
+          email: result.user?.email,
+        };
+        axiosPublic.post("/user", userInfo)
+        .then(res=>{
+          console.log(res.data);
+          if (res.data.insertedId) {
+            Swal.fire({
+              position: "top-center",
+              icon: "success",
+              title: "User created sduccessfully.",
+              showConfirmButton: false,
+              timer: 1500,
+            });
+          }
+        })
+      
         setLoading(false);
         navigate(from, { replace: true });
       })
+
       .catch((err) => {
         console.log(err);
-        // setLoading(false);
+        setLoading(false);
       });
+
+  
+   
+
+   
   };
   return (
     <>
